@@ -1,10 +1,8 @@
 extends Node2D
 
-#状态机，控制是否能操作
 enum {wait, move}
 var state
 
-#网格变量,也就是位置参数
 export (int) var width
 export (int) var height
 export (int) var x_start
@@ -12,7 +10,6 @@ export (int) var y_start
 export (int) var offset
 export (int) var y_offset
 
-#棋子数组.用于预加载棋子资源
 var possible_pieces = [
 preload("res://Scenes/yellow_piece.tscn"),
 preload("res://Scenes/blue_piece.tscn"),
@@ -22,15 +19,12 @@ preload("res://Scenes/pink_piece.tscn"),
 preload("res://Scenes/green_piece.tscn")
 ]
 
-#当前场景中的所有棋子
 var all_pieces = []
 
-#触摸变量
 var first_touch = Vector2(0, 0)
 var final_touch = Vector2(0, 0)
 var controlling = false
 
-#游戏开始时，将所有棋子随机生成在棋盘上
 func _ready():
 	state = move
 	randomize()
@@ -45,13 +39,10 @@ func make_2d_array():
 			array[i].append(null)
 	return array
 
-#随机生成任意颜色的棋子
 func spawn_pieces():
 	for i in width:
 		for j in height:
-			#选择一个随机数并储存它
 			var rand = floor(rand_range(0, possible_pieces.size()))
-			#从数组实例化棋子
 			var piece = possible_pieces[rand].instance()
 			var loops = 0
 			while(match_at(i, j, piece.color) && loops < 100):
@@ -62,7 +53,6 @@ func spawn_pieces():
 			piece.position = grid_to_pixel(i, j)
 			all_pieces[i][j] = piece
 
-#生成棋盘的时候通过匹配周围的棋子避免棋盘上有俩个以上的相同棋子
 func match_at(i, j, color):
 	if i > 1:
 		if all_pieces[i - 1][j] != null && all_pieces[i - 2][j] != null:
@@ -73,7 +63,6 @@ func match_at(i, j, color):
 			if all_pieces[i][j - 1].color == color && all_pieces[i][j - 2].color == color:
 				return true
 
-#网格和像素互相转换的俩段函数
 func grid_to_pixel(column, row):
 	var new_x = x_start + offset * column
 	var new_y = y_start + -offset * row
@@ -84,7 +73,6 @@ func pixel_to_grid(pixel_x, pixel_y):
 	var new_y = round((pixel_y - y_start) / -offset)
 	return Vector2(new_x, new_y)
 
-#检查操作是否在网格上
 func is_in_grid(grid_position):
 	if grid_position.x >= 0 && grid_position.x < width:
 		if grid_position.y >= 0 && grid_position.y < height:
@@ -93,7 +81,6 @@ func is_in_grid(grid_position):
 
 func touch_input():
 	if Input.is_action_just_pressed("ui_touch"):
-		#如果操作在网格上才允许操作v0.2
 		if is_in_grid(pixel_to_grid(get_global_mouse_position().x, get_global_mouse_position().y)):
 			first_touch = pixel_to_grid(get_global_mouse_position().x, get_global_mouse_position().y)
 			controlling = true
@@ -102,9 +89,7 @@ func touch_input():
 			final_touch = pixel_to_grid(get_global_mouse_position().x, get_global_mouse_position().y)
 			controlling = false
 			touch_difference(first_touch, final_touch)
-			
 
-#交换棋子的位置v0.1 还需要在匹配失败的时候把位置换回来
 func swap_pieces(column, row, direction):
 	var first_piece = all_pieces[column][row]
 	var other_piece = all_pieces[column + direction.x][row + direction.y]
@@ -133,7 +118,6 @@ func _process(delta):
 	if state == move:
 		touch_input()
 
-#更改棋子属性
 func match_dim(item):
 	item.matched = true
 	item.dim()
@@ -158,7 +142,6 @@ func find_matches():
 							match_dim(all_pieces[i][j + 1])
 							get_parent().get_node("destroy_timer").start()
 
-#销毁匹配颜色相同的棋子
 func destroy_matched():
 	for i in width:
 		for j in height:
@@ -166,10 +149,8 @@ func destroy_matched():
 				if all_pieces[i][j].matched:
 					all_pieces[i][j].queue_free()
 					all_pieces[i][j] = null
-	print("销毁棋子")
 	get_parent().get_node("collapse_timer").start()
 
-#让棋子向下补充空缺
 func collapse_columns():
 	for i in width:
 		for j in height:
@@ -180,7 +161,6 @@ func collapse_columns():
 						all_pieces[i][j] = all_pieces[i][k]
 						all_pieces[i][k] = null
 						break
-	print("下坠")
 	get_parent().get_node("refill_timer").start()
 
 func refill_columns():
@@ -211,11 +191,9 @@ func after_refill():
 					return
 	state = move
 
-#摧毁匹配上的相同颜色的棋子
 func _on_destroy_timer_timeout():
 	destroy_matched()
 
-#让棋子向下补充空白位置
 func _on_collapse_timer_timeout():
 	collapse_columns()
 
