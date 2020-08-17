@@ -178,8 +178,7 @@ func refill_columns():
 				piece.position = grid_to_pixel(i, j - y_offset)
 				piece.move(grid_to_pixel(i, j))
 				all_pieces[i][j] = piece
-	state = move
-	#after_refill()
+	after_refill()
 
 func after_refill():
 	for i in width:
